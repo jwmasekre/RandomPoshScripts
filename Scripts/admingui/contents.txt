@@ -1,0 +1,12 @@
+contents
+
+admingui.ps1 - the main script, contains the gui and logic for buttons
+adminguibg1.png - the background image, an 8x8 png
+adminguiico2-1.ico - an alternate icon
+adminguiico2-2.ico - the standard icon
+adminguilauncher.bat - the batch file that kicks off the runas /smartcard process
+adminguilauncher.bat.lnk - the shortcut the user copies to their desktop (retains the standard icon)
+contents.txt - this text file
+iconlaunch.bat - the batch file that is launched by adminguilauncher.bat, launches powershell.lnk as admin
+powershell.lnk - a link to the powershell executable, given the admin gui icon so it has its own icon in the taskbar
+readme.txt - the installation and usage instructions
