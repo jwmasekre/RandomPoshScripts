@@ -4,23 +4,27 @@
 .SYNOPSIS
     recreates mimpam without requiring anything other than rsat, best paired with a script that alerts on group membership changes
 .NOTES
-    Updated: 2019-10-02        work begins
+    Updated: 2019-10-16         introduced integration with a cred file generator
+    Updated: 2019-10-16         now retrieves group list from a config file
+    Updated: 2019-10-16         now retrieves variables from a config file
     Release Date: 2019-10-02
 
-  Author: SGT Joshua Masek - joshua.w.masek.mil@mail.mil
+  Author: Joshua Masek - josh.masek@joshuamasek.com
 #>
 
-#globalvariables
-$searchbase = "samplesearchbase"
-$adminidentifier = ".a"
-$minmin = 0
-$maxmin = 59
-$minhour = 0
-$maxhour = 2
-$servicecredslocation = .\serviceacctcreds.txt
-$emaildomain = "joshuamasek.com"
-$auditaccount = "account.auditing"
-$auditsubject = "ELEVATION ALERT: SCRIPT"
+#pulls variables from config file
+get-content "$psscriptroot\settings.conf" -ErrorAction inquire | ForEach-Object {
+    $int  =""
+    $var = $_ -split "=", 2
+    $varname = $var[0]
+    if ([int]::TryParse($var[1],[ref]$int) -eq $true) {
+        $varvalue = $int
+    }
+    else {
+        $varvalue = $var[1]
+    }
+    set-variable -name "$varname" -Value "$varvalue"
+}
 
 #splash
 function get-splash {
@@ -54,20 +58,22 @@ function get-splash {
     get-group
 }
 
-#choose group - playing with the idea of a config that you can edit to pull these from, or automatically generate from AD
+#choose group using group.conf file
 function get-group {
+    $grouplist = get-content "$psscriptroot\group.conf" -ErrorAction inquire
+    $i = 0
     Write-Host "Please select which administrative group you'd like to temporarily belong to." -ForegroundColor darkcyan
-    Write-Host "  1)  Domain Administrators" -ForegroundColor darkgreen
-    Write-Host "  2)  Enterprise Administrators" -ForegroundColor darkgreen
-    Write-Host "  3)  SCCM Administrators" -ForegroundColor darkgreen
-    Write-Host "  4)  DNS Administrators" -ForegroundColor darkgreen
+    foreach ($line in $grouplist) {
+        Write-Host "  $i)  $line" -ForegroundColor DarkGreen
+        $i++
+    }
     $groupselect = read-host
-    switch ($groupselect) {
-        1 {$script:group = "Domain Administrators";break}
-        2 {$script:group = "Enterprise Administrators";break}
-        3 {$script:group = "SCCM Administrators";break}
-        4 {$script:group = "DNS Administrators";break}
-        default {write-host "Invalid selection" -ForegroundColor red;get-group;break}
+    if ((!($groupselect -match "^\d+$")) -or ($groupselect -gt $grouplist.length) -or ($groupselect -lt 0)) {
+        write-host "Invalid selection" -ForegroundColor red
+        get-group
+    }
+    else {
+        $script:group = $grouplist[$groupselect]
     }
     get-membership
 }
@@ -117,7 +123,7 @@ function get-timeframe {
 #elevate
 function add-tempmember {
     write-host "Adding $adminaccount to $group until $endtime."
-    $servicecreds = Get-Content -Path $servicecredslocation
+    $servicecreds = import-clixml -Path $servicecredslocation
     Add-ADGroupMember -Identity $group -Members $adminaccount -Credential $servicecreds -MemberTimeToLive $timespan
 }
 

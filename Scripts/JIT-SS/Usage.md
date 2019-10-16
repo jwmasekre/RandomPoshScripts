@@ -19,4 +19,20 @@ If he meets both requirements, he then indicates how long he needs Domain Admins
 
 An email is then sent to the auditing mailbox. The intent of this is to simultaneously have notifications delivered when group memberships change; if a user uses the script, two notifications should exist. If the service account is misused (used to change group membership without using the script), only one notification will be present, indicating abuse or compromise and likely necessitating a change of password.
 
-Again, this script is designed for small IT departments that may not be able to 
+Again, this script is designed for small IT departments that may not be able to afford a 3rd party solution or dedicate a user to granting requests. It is definitely not the most secure implementation of JIT, but it's significantly better than letting administrative accounts just hold on to group memberships.
+## Variables to Set in Config File
+| Variable Name | Description | Example |
+| ----------- | ----------- | ----------- |
+| $searchbase | sets where to look for users in AD | CN=Users,DC=joshuamasek,DC=com |
+| $adminidentifier | the means with which you identify admin accounts | .a |
+| $minmin | minimum number of minutes a user can request | 0 |
+| $maxmin | maximum number of minutes a user can request | 59 |
+| $minhour | minimum number of hours a user can request | 0 |
+| $maxhour | maximum number of hours a user can request | 2 |
+| $servicecredslocation | where the user has stored their copy of the service account's creds | c:\users\josh.masek\jit-ss-creds.txt |
+| $emaildomain | the domain you use for email | joshuamasek.com |
+| $auditaccount | the account/mailbox for auditing | account.auditing |
+| $auditsubject | the subject your email to the auditing account will have | ELEVATION ALERT: SCRIPT |
+## Planned Changes
+- The current implementation of determining timespan is just terrible.
+- Email is not an elegant solution to logging, so I'd like to offer a switch in the settings.conf to allow for a different logging option
